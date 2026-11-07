@@ -95,7 +95,7 @@ Tips:
 | Problem | What to try |
 |---|---|
 | Nothing appears on the page | Wait about 20 seconds after clicking: the first start loads the models. Then reload the video page and click the button off and on. |
-| The box says "The translator is not running" | Run `setup.bat` again: it reconnects Chrome to the translator. Do the same if you moved the folder. The file `server/server.log` shows why it stopped. |
+| The box says "The translator is not running" | Double-click `connect_chrome.bat`: it reconnects Chrome to the translator. Do the same if you moved the folder. The file `server/server.log` shows why it stopped. |
 | To see what the translator is doing | Double-click `start_server.bat` and leave its window open. |
 | `start_server.bat` closes straight away or says the port is in use | The translator is already running in the background. Just use the extension's button. |
 | `setup.bat` says Python was not found | Install Python 3.12 from python.org and tick "Add python.exe to PATH". |
