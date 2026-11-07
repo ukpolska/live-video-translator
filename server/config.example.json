@@ -1,0 +1,44 @@
+{
+  "port": 8765,
+  "asr_dir": "models/parakeet-tdt-0.6b-v3-int8",
+  "vad_model": "models/silero_vad.onnx",
+  "packs": {
+    "ru": {
+      "model": "models/packs/ru-en",
+      "spm": "models/packs/ru-en"
+    },
+    "uk": {
+      "model": "models/packs/uk-en",
+      "spm": "models/packs/uk-en"
+    },
+    "es": {
+      "model": "models/packs/es-en",
+      "spm": "models/packs/es-en"
+    }
+  },
+  "language": "auto",
+  "latin_default": "es",
+  "asr_threads": 2,
+  "mt_threads": 3,
+  "beam_size": 4,
+  "vad": {
+    "threshold": 0.5,
+    "min_silence": 0.25,
+    "min_speech": 0.25,
+    "force_cut": 5.0,
+    "max_speech": 20.0,
+    "cut_search": 1.0
+  },
+  "preroll_samples": 8300,
+  "fallback_whisper_dir": null,
+  "junk_max_words": 3,
+  "junk_confidence": -0.3,
+  "markers": {
+    "enabled": true,
+    "unclear_confidence": -0.35,
+    "inaudible_min_seconds": 2.0,
+    "inaudible_cooldown_seconds": 6.0,
+    "sound_level": 0.02,
+    "no_speech_seconds": 4.0
+  }
+}

@@ -1,0 +1,18 @@
+# Downloaded by setup.bat, never stored in the repository
+server/venv/
+server/models/
+server/config.json
+
+# Release files built locally
+dist/
+
+# Python and editor leftovers
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+
+# Created on each person's computer by setup and by the translator
+server/native_host_manifest.json
+server/server.log
+server/server.starting

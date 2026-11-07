@@ -1,0 +1,6 @@
+sherpa-onnx==1.13.8
+ctranslate2==4.8.2
+sentencepiece==0.2.2
+soxr==1.1.0
+numpy==2.5.3
+websockets==17.1

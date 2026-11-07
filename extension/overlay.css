@@ -1,0 +1,43 @@
+#__live_translate_overlay__ {
+  all: initial;
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 70vw;
+  min-width: 40px;
+  min-height: 16px;
+  box-sizing: border-box;
+  padding: 10px 18px;
+  background: rgba(20, 20, 20, 0.45);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.4;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 2147483647;
+  cursor: move;
+  pointer-events: auto;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+#__live_translate_overlay__.visible {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Captions that are not plain translations: shown in italics and slightly dimmed. */
+#__live_translate_overlay__[data-kind="unclear"] {
+  font-style: italic;
+  color: #dddddd;
+}
+
+#__live_translate_overlay__[data-kind="inaudible"],
+#__live_translate_overlay__[data-kind="notice"],
+#__live_translate_overlay__[data-kind="music"] {
+  font-style: italic;
+  color: #bbbbbb;
+}
