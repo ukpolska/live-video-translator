@@ -69,8 +69,11 @@ def start_server(idle_minutes):
     if not os.path.exists(python):
         return False
     log = open(os.path.join(HERE, "server.log"), "ab")
-    DETACHED_PROCESS, NEW_PROCESS_GROUP, BREAKAWAY_FROM_JOB = 0x00000008, 0x00000200, 0x01000000
-    base = DETACHED_PROCESS | NEW_PROCESS_GROUP
+    # CREATE_NO_WINDOW gives the program a hidden console. (DETACHED_PROCESS looks similar but
+    # makes the virtual environment's Python launcher open a new, visible console for the
+    # real program: the black window that would never close.)
+    NO_WINDOW, NEW_PROCESS_GROUP, BREAKAWAY_FROM_JOB = 0x08000000, 0x00000200, 0x01000000
+    base = NO_WINDOW | NEW_PROCESS_GROUP
     # Chrome may keep its helpers in a "job" that is closed with Chrome: try to break away from
     # it so the translator keeps running; if that is not allowed, start it without.
     for flags in (base | BREAKAWAY_FROM_JOB, base):
