@@ -26,6 +26,14 @@ _EN_WORDS = set(
     "the and is are you to of it that in for on with this was have not but be at he she we they "
     "what do does did my your".split()
 )
+# Polish: letters that exist in no other language this program handles, plus very common words
+# ("to", "no" and "co" are left out because English and Spanish use them too).
+_PL_LETTERS = "ąćęłńśźż"
+_PL_WORDS = set(
+    "nie jest się na że do jak ale tak już czy dla ten tego jestem jesteś są był była było być "
+    "bardzo tylko może mnie ciebie jego jej nas was ich tutaj teraz dlaczego dobrze dziękuję proszę "
+    "przepraszam tam wiem chcę mam masz mamy".split()
+)
 
 
 def load_config(path=None):
@@ -47,21 +55,29 @@ def is_cyrillic(text):
 
 
 def guess_language(text, latin_default="es"):
-    """Cyrillic text -> 'ru'. Latin text -> 'es' or 'en' by common words (latin_default on a tie)."""
+    """Cyrillic text -> 'ru'. Latin text -> 'pl', 'es' or 'en' by common words and letters
+    (latin_default on a tie)."""
     if is_cyrillic(text):
         return "ru"
     lowered = text.lower()
     words = re.findall(r"[^\W\d_]+", lowered)
-    es = sum(w in _ES_WORDS for w in words) + 2 * sum(ch in "ñ¿¡" for ch in lowered)
-    en = sum(w in _EN_WORDS for w in words)
-    if es > en:
-        return "es"
-    if en > es:
-        return "en"
-    return latin_default
+    scores = {  # order matters: on a tie with no default among the leaders, the first one wins
+        "pl": sum(w in _PL_WORDS for w in words) + 2 * sum(ch in _PL_LETTERS for ch in lowered),
+        "es": sum(w in _ES_WORDS for w in words) + 2 * sum(ch in "ñ¿¡" for ch in lowered),
+        "en": sum(w in _EN_WORDS for w in words),
+    }
+    best = max(scores.values())
+    leaders = [lang for lang, score in scores.items() if score == best]
+    if best == 0 or len(leaders) > 1:
+        return latin_default if latin_default in leaders or best == 0 else leaders[0]
+    return leaders[0]
 
 
 _FILLERS = {"mm", "mmm", "hm", "hmm", "mhm", "uh", "um", "eh", "ah", "oh", "ay", "ээ", "эм", "мм", "хм", "ам"}
+
+# Web-page phrases the translation model invents when it is given a very short, unclear scrap
+# of speech (seen in the log: 'Poubyć.' -> 'Skip to content'). Nobody says these on a video.
+_BOILERPLATE = {"skip to content", "skip to main content"}
 
 
 def sound_tag(text):
@@ -85,20 +101,49 @@ def is_filler(text):
 
 
 def collapse_repeats(text):
-    """'Yes yes yes yes yes' (a translation glitch on very short audio) -> 'Yes'."""
+    """'Yes yes yes yes yes' or 'Come on, come on, come on.' (a translation glitch on very short
+    audio) -> 'Yes' / 'Come on.'  A word or a phrase of up to 4 words repeated 3+ times in a row
+    is cut to one copy; the sentence's closing punctuation is kept."""
     def key(word):
         return re.sub(r"\W+", "", word.lower())
 
     words = text.split()
-    out = []
-    i = 0
-    while i < len(words):
-        j = i
-        while j + 1 < len(words) and key(words[j + 1]) == key(words[i]):
-            j += 1
-        out.extend(words[i : i + 1] if j - i + 1 >= 3 else words[i : j + 1])
-        i = j + 1
-    return " ".join(out)
+    for size in (1, 2, 3, 4):
+        out = []
+        i = 0
+        while i < len(words):
+            group_key = [key(w) for w in words[i : i + size]]
+            run = 1
+            while (
+                len(group_key) == size
+                and i + (run + 1) * size <= len(words)
+                and [key(w) for w in words[i + run * size : i + (run + 1) * size]] == group_key
+            ):
+                run += 1
+            if run >= 3 and size <= len(words) - i:
+                group = words[i : i + size]
+                closing = re.search(r"[^\w]+$", words[i + run * size - 1])
+                group[-1] = re.sub(r"[^\w]+$", "", group[-1]) + (closing.group(0) if closing else "")
+                out.extend(group)
+                i += run * size
+            else:
+                out.append(words[i])
+                i += 1
+        words = out
+    return " ".join(words)
+
+
+def is_looping(text):
+    """True when a speech model has got stuck repeating itself ('estar aquí, estar aquí, estar
+    aquí...' or 'no no no no no no'): a word 5+ times in a row, or a 2-4 word phrase 3+ times."""
+    words = [re.sub(r"\W+", "", w.lower()) for w in text.split()]
+    words = [w for w in words if w]
+    for size, needed in ((1, 5), (2, 3), (3, 3), (4, 3)):
+        for start in range(len(words) - size * needed + 1):
+            chunk = words[start : start + size]
+            if all(words[start + k * size : start + (k + 1) * size] == chunk for k in range(1, needed)):
+                return True
+    return False
 
 
 def tidy_translation(source, english):
@@ -287,7 +332,8 @@ class Pipeline:
         self.fallbacks = {}
         whisper_dir = config.get("fallback_whisper_dir")
         mode = config["language"]
-        wanted = ["ru", "es"] if mode == "auto" else ([mode] if mode in ("ru", "es") else [])
+        known = [lang for lang in ("ru", "es", "pl") if lang in config["packs"]]
+        wanted = known if mode == "auto" else ([mode] if mode in known else [])
         if whisper_dir:
             for lang in wanted:
                 self.fallbacks[lang] = self._load_whisper(_abs(whisper_dir), lang)
@@ -316,6 +362,7 @@ class Pipeline:
         self.sound_level = markers.get("sound_level", 0.02)
         self.no_speech_seconds = markers.get("no_speech_seconds", 4.0)  # 0 turns it off
         self.recent = deque(maxlen=6)  # alphabet of the last few captions
+        self.last_latin = config["latin_default"]  # es or pl: the Latin-alphabet language heard last
 
     def _load_whisper(self, whisper_dir, language):
         return sherpa_onnx.OfflineRecognizer.from_whisper(
@@ -332,6 +379,7 @@ class Pipeline:
 
     def new_stream(self, sample_rate):
         self.recent.clear()
+        self.last_latin = self.config["latin_default"]
         return Stream(self, sample_rate)
 
     @staticmethod
@@ -377,10 +425,14 @@ class Pipeline:
                 if self._wrong_script(original):
                     redo = mode
             elif dominant and _family(original) != dominant and self._looks_like_junk(original, confidence):
-                redo = "ru" if dominant == "cyr" else "es"
+                redo = "ru" if dominant == "cyr" else self.last_latin
             if redo in self.fallbacks:
-                heard = original
-                original, confidence = self._decode(self.fallbacks[redo], speech)
+                redone, redone_confidence = self._decode(self.fallbacks[redo], speech)
+                # Whisper, forced to a language that is not being spoken, tends to invent text and
+                # loop ("estar aquí" 100 times). A looping answer is thrown away: Parakeet's stays.
+                if not is_looping(redone):
+                    heard = original
+                    original, confidence = redone, redone_confidence
         t1 = time.time()
         if not original:
             return {"skipped": "nothing recognised" + (f" (Parakeet had written {heard!r})" if heard else "")}
@@ -394,7 +446,13 @@ class Pipeline:
             return {"skipped": f"off-language text ignored while the stream is mostly {dominant}: {original!r}"}
         lang = mode
         if lang == "auto":
-            lang = guess_language(original, self.config["latin_default"])
+            lang = guess_language(original, self.last_latin)
+        # Only real sentences say what language the stream is in. A stray "Yeah." or "Okay" in a
+        # Russian video must not make the stream look Latin (that sent real Russian to Whisper
+        # as "Spanish" and produced nonsense), and English is not a language we translate from.
+        votes = sound is None and lang != "en" and len(re.findall(r"[^\W\d_]+", original)) > self.junk_words
+        if votes and lang in ("es", "pl"):
+            self.last_latin = lang
         if lang == "ru" and "uk" in self.translators and _UKRAINIAN_LETTERS.search(original):
             lang = "uk"  # Russian streams often slip into Ukrainian; і ї є ґ give it away
         translator = self.translators.get(lang)
@@ -405,7 +463,10 @@ class Pipeline:
         else:
             english = translator.translate(original) if translator else original
             english = tidy_translation(original, collapse_repeats(english))
-            self.recent.append(_family(original))
+            if english.strip(" .!?").lower() in _BOILERPLATE:
+                return {"skipped": f"translation was web-page text ({english!r}) for {original!r}"}
+            if votes:
+                self.recent.append(_family(original))
         t2 = time.time()
         return {
             "lang": lang,

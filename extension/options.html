@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Video Translator - caption settings</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 20px; max-width: 760px; margin: 28px auto; padding: 0 20px; color: #1a1a1a; background: #fff; }
+    h1 { font-size: 28px; }
+    label { display: block; font-weight: 700; margin-top: 26px; }
+    .hint { font-weight: 400; color: #444; font-size: 17px; }
+    input[type=range] { width: 100%; height: 32px; margin-top: 8px; }
+    .value { float: right; font-weight: 400; }
+    .preview { margin-top: 30px; background: #333; padding: 24px 12px; border-radius: 8px; }
+    #sample { margin: 0 auto; background: rgba(0,0,0,0.8); color: #fff; font-weight: 600; line-height: 1.4;
+              text-align: center; border-radius: 10px; padding: 10px 22px; border: 1px solid rgba(255,255,255,0.15); }
+    #sample div + div { margin-top: 6px; }
+    #sample div:not(:last-child) { opacity: 0.75; }
+    button { font-size: 20px; padding: 10px 20px; margin-top: 26px; cursor: pointer; }
+    #saved { margin-left: 14px; color: #1b6b1b; }
+  </style>
+</head>
+<body>
+  <h1>Caption settings</h1>
+  <p>Changes are saved straight away. They apply to the next caption on any tab.</p>
+
+  <label>Box width <span class="value" id="widthValue"></span>
+    <div class="hint">How much of the screen width a long sentence may use.</div>
+    <input type="range" id="widthPercent" min="40" max="98" step="1"></label>
+
+  <label>Text size <span class="value" id="fontValue"></span>
+    <input type="range" id="fontSize" min="16" max="60" step="1"></label>
+
+  <label>How long text stays <span class="value" id="holdValue"></span>
+    <div class="hint">Longer gives you more time to read each sentence.</div>
+    <input type="range" id="holdFactor" min="0.5" max="3" step="0.25"></label>
+
+  <label>Lines shown at once <span class="value" id="linesValue"></span>
+    <div class="hint">New sentences appear under the previous ones, so you can finish reading.</div>
+    <input type="range" id="maxLines" min="1" max="5" step="1"></label>
+
+  <div class="preview"><div id="sample"></div></div>
+
+  <button id="reset">Back to the normal settings</button><span id="saved"></span>
+
+  <script src="options.js"></script>
+</body>
+</html>

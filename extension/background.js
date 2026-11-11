@@ -110,9 +110,34 @@ chrome.action.onClicked.addListener(async (tab) => {
   chrome.runtime.sendMessage({ type: "start-capture", streamId, tabId: tab.id });
 });
 
-// Messages from the offscreen document (which holds the connection to the translator program).
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === "caption") {
+// Chrome stops a tab whose audio is being captured from taking over the whole screen: the
+// video's own fullscreen button only fills the area under the toolbar. While a captured tab's
+// video is fullscreen, put the Chrome window itself into fullscreen (like pressing F11), and
+// put the window back the way it was afterwards.
+async function handlePageFullscreen(tab, on) {
+  try {
+    const { windowRestore } = await chrome.storage.session.get("windowRestore");
+    if (on) {
+      if (tab.id !== (await getActiveTabId())) return;
+      const win = await chrome.windows.get(tab.windowId);
+      if (win.state === "fullscreen") return; // already fullscreen (F11 pressed by hand): leave it alone
+      await chrome.storage.session.set({ windowRestore: { windowId: tab.windowId, state: win.state } });
+      await chrome.windows.update(tab.windowId, { state: "fullscreen" });
+    } else if (windowRestore && windowRestore.windowId === tab.windowId) {
+      await chrome.storage.session.remove("windowRestore");
+      await chrome.windows.update(tab.windowId, { state: windowRestore.state });
+    }
+  } catch (err) {
+    console.error("[LiveTranslate] could not change the window's fullscreen state", err);
+  }
+}
+
+// Messages from the offscreen document (which holds the connection to the translator program)
+// and from the caption script in the page.
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (message.type === "page-fullscreen" && sender.tab) {
+    handlePageFullscreen(sender.tab, message.on);
+  } else if (message.type === "caption") {
     sendToCaptionedTab(message);
   } else if (message.type === "status") {
     if (message.text === "connected") {

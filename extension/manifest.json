@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Live Video Translator",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Ybu2ryV5vIZzYa7R3LGumLxw7OeLZjTLARq9vjz4CZQnXZJZ6ychDbDkLox43lhR50iaQnPrAjSo4lo6HD7fcT3b5J3+YKJAKrDAP25xc9vHQRGMRvZ/Ws/n0sRrLCZKCeNmnVgJvJ+WZlFSqmJw2j3/cbasmUATDs3p+TbYnwL59hugCeK/WzirO84trIpY/E5/ver5dRq7G0ZKKIM3IGTAW6N1uMLdky1e0nluLxyo6aS3PuGqOIeDjbUILrWEnjbtD/c9SwLBoMuTpblhSR25nhIDz7gPdkIe6fqK3B0pJuOonflYbLt5RjWm/A+mrfQmmum4JrKXL4L2FFdSQIDAQAB",
   "description": "Overlays live English translation captions on any video playing in the browser tab, using a local offline speech engine.",
   "permissions": [
@@ -17,6 +17,10 @@
   },
   "action": {
     "default_title": "Click to start/stop live translation on this tab"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   },
   "content_scripts": [
     {

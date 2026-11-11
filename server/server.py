@@ -30,7 +30,7 @@ if "--idle-exit" in args:
     position = args.index("--idle-exit")
     idle_exit_minutes = float(args[position + 1])
     del args[position : position + 2]
-if args and args[0] in ("auto", "ru", "es"):
+if args and args[0] in ("auto", "ru", "es", "pl"):
     config["language"] = args[0]  # e.g. "python server.py ru" locks the server to Russian
 markers = config.get("markers", {})
 markers_enabled = markers.get("enabled", True)

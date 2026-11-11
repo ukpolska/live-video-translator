@@ -4,14 +4,16 @@
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  max-width: 70vw;
+  /* max-content: without it a box that starts at the centre line is only offered half the screen */
+  width: max-content;
+  max-width: 85vw;
   min-width: 40px;
   min-height: 16px;
   box-sizing: border-box;
-  padding: 10px 18px;
+  padding: 10px 22px;
   background: rgba(20, 20, 20, 0.45);
   color: #fff;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
   line-height: 1.4;
   font-family: Arial, Helvetica, sans-serif;
@@ -29,15 +31,47 @@
   background: rgba(0, 0, 0, 0.8);
 }
 
+/* The resize grip in the bottom-right corner (a white triangle). */
+#__live_translate_overlay__ .lt-grip {
+  all: unset;
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 0 55%, rgba(255, 255, 255, 0.85) 55% 100%);
+  border-bottom-right-radius: 7px;
+  opacity: 0.55;
+}
+
+#__live_translate_overlay__ .lt-grip:hover {
+  opacity: 1;
+}
+
+/* One row per caption line. Older lines (above) are slightly dimmer than the newest. */
+#__live_translate_overlay__ .lt-line {
+  all: unset;
+  display: block;
+}
+
+#__live_translate_overlay__ .lt-line + .lt-line {
+  margin-top: 6px;
+}
+
+#__live_translate_overlay__ .lt-line:not(:last-child) {
+  opacity: 0.75;
+}
+
 /* Captions that are not plain translations: shown in italics and slightly dimmed. */
-#__live_translate_overlay__[data-kind="unclear"] {
+#__live_translate_overlay__ .lt-line[data-kind="unclear"] {
   font-style: italic;
   color: #dddddd;
 }
 
-#__live_translate_overlay__[data-kind="inaudible"],
-#__live_translate_overlay__[data-kind="notice"],
-#__live_translate_overlay__[data-kind="music"] {
+#__live_translate_overlay__ .lt-line[data-kind="inaudible"],
+#__live_translate_overlay__ .lt-line[data-kind="notice"],
+#__live_translate_overlay__ .lt-line[data-kind="music"] {
   font-style: italic;
   color: #bbbbbb;
 }
