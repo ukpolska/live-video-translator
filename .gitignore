@@ -16,3 +16,5 @@ __pycache__/
 server/native_host_manifest.json
 server/server.log
 server/server.starting
+# Audio of a piece that made the translator stall (kept only so the cause can be found; private)
+server/stalled_piece.npy

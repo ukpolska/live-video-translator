@@ -71,7 +71,11 @@
     return overlay;
   }
 
-  document.addEventListener("fullscreenchange", ensureOverlay);
+  // Only move a box that is actually showing captions; creating one here left an empty grey
+  // "ghost" box on the page every time a video went into or out of fullscreen.
+  document.addEventListener("fullscreenchange", () => {
+    if (overlay && overlay.isConnected) ensureOverlay();
+  });
 
   // Tell the extension when the page's video goes fullscreen or leaves it, so it can make the
   // whole Chrome window fullscreen too (Chrome does not do that by itself for a captured tab).

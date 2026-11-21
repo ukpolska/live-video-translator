@@ -6,10 +6,12 @@ Protocol:
                        then binary messages of mono float32 audio at that sample rate
   server -> extension: JSON {"text": <English>, "original": <source text>, "lang": <ru|es|en>}"""
 import asyncio
+import faulthandler
 import functools
 import json
 import os
 import sys
+import threading
 import time
 
 import numpy as np
@@ -42,11 +44,43 @@ pipe = pl.Pipeline(config)
 print("Models loaded.")
 
 
+# A speech piece normally takes well under a second. If one takes far longer, something is
+# wrong, and the cause is hard to see from outside, so this thread writes down where every
+# thread is stuck (and keeps the audio of that piece) the first time it happens for a piece.
+STALL_SECONDS = 12
+working = {"since": None, "reported": False, "speech": None}
+
+
+def stall_watchdog():
+    while True:
+        time.sleep(3)
+        since = working["since"]
+        if since is not None and not working["reported"] and time.time() - since > STALL_SECONDS:
+            working["reported"] = True
+            speech = working["speech"]
+            seconds = len(speech) / pl.TARGET_RATE if speech is not None else 0
+            print(f"STALL: one speech piece ({seconds:.1f}s of audio) has been processing for "
+                  f"{time.time() - since:.0f}s. Where every thread is right now:")
+            faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
+            try:
+                if speech is not None:
+                    np.save(os.path.join(pl.HERE, "stalled_piece.npy"), speech)
+                    print("The audio of that piece was saved to server/stalled_piece.npy")
+            except Exception as err:
+                print(f"(could not save the piece: {err})")
+
+
 async def translate_worker(websocket, queue, clock):
     while True:
         speech, pause_wait, queued_at = await queue.get()
         queue_wait = time.time() - queued_at
-        result = await asyncio.to_thread(pipe.process, speech)
+        working.update(since=time.time(), reported=False, speech=speech)
+        try:
+            result = await asyncio.to_thread(pipe.process, speech)
+        finally:
+            if working["reported"]:
+                print(f"(that piece finally finished after {time.time() - working['since']:.0f}s)")
+            working["since"] = None
         if "skipped" in result:
             print(f"({result['skipped']})")
             # Sound was detected for a while but nothing could be made out (speech under
@@ -165,6 +199,7 @@ async def handle(websocket):
 
 
 async def main():
+    threading.Thread(target=stall_watchdog, daemon=True).start()
     port = config["port"]
     async with websockets.serve(handle, "localhost", port, max_size=None, ping_interval=None):
         print(f"Translation server listening on ws://localhost:{port}")

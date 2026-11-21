@@ -24,7 +24,12 @@ _ES_WORDS = set(
 )
 _EN_WORDS = set(
     "the and is are you to of it that in for on with this was have not but be at he she we they "
-    "what do does did my your".split()
+    "what do does did my your "
+    # Short everyday English that turns up on streams in other languages ("Yeah.", "Oh goodness.").
+    # Words that mean something in Spanish or Polish ("no", "me", "ten", "tak") are left out.
+    "yeah yep okay ok oh goodness really huh boy good more well wow hey hello sorry please thanks "
+    "thank great nice anybody nobody nothing something just like all can will would could there here "
+    "when how who why where if so now two three never going know think want yes right sure phew shit".split()
 )
 # Polish: letters that exist in no other language this program handles, plus very common words
 # ("to", "no" and "co" are left out because English and Spanish use them too).
@@ -439,6 +444,8 @@ class Pipeline:
         sound = sound_tag(original)
         if sound is None and is_filler(original):
             return {"skipped": f"filler sound {original!r}"}
+        if sound is None and len(re.findall(r"[^\W\d_]", original)) < 2:
+            return {"skipped": f"a single letter is not a word: {original!r}"}  # 'J.', 'S'
         if mode != "auto":
             if self._wrong_script(original):
                 return {"skipped": f"wrong script for {mode}-only mode: {original!r}"}
@@ -465,6 +472,11 @@ class Pipeline:
             english = tidy_translation(original, collapse_repeats(english))
             if english.strip(" .!?").lower() in _BOILERPLATE:
                 return {"skipped": f"translation was web-page text ({english!r}) for {original!r}"}
+            # A scrap of one or two words does not turn into a whole sentence: the translator
+            # invented it ('More.' -> "I'm going to kill you.").
+            source_words = len(re.findall(r"[^\W\d_]+", original))
+            if source_words <= 2 and len(english.split()) > source_words + 3:
+                return {"skipped": f"translation far longer than the fragment: {original!r} -> {english!r}"}
             if votes:
                 self.recent.append(_family(original))
         t2 = time.time()
