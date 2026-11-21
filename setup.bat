@@ -7,7 +7,7 @@ echo.
 echo  Live Video Translator - setup
 echo  -----------------------------
 echo  This installs what the translator needs and downloads the speech and
-echo  translation models (about 1.1 GB). It can take 10-30 minutes, and it is
+echo  translation models (about 1.3 GB). It can take 10-30 minutes, and it is
 echo  safe to run again if anything goes wrong.
 echo.
 

@@ -3,7 +3,7 @@
 Normally run for you by setup.bat. It is safe to run again: anything already downloaded and
 checked is kept.
 
-  python setup_models.py                    the models needed to run (about 1.1 GB to download)
+  python setup_models.py                    the models needed to run (about 1.3 GB to download)
   python setup_models.py --with-whisper     also the optional Whisper "second opinion" (+640 MB)
   python setup_models.py --packs-from X     take the translation packs from a folder or web
                                             address X instead of the project's release page
@@ -24,7 +24,7 @@ HERE = Path(__file__).resolve().parent
 MODELS = HERE / "models"
 
 SHERPA_RELEASE = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models"
-# Where the translation packs (ru-en.zip, uk-en.zip, es-en.zip) are published.
+# Where the translation packs (ru-en.zip, uk-en.zip, es-en.zip, pl-en.zip) are published.
 PACKS_BASE_URL = "https://github.com/ukpolska/live-video-translator/releases/download/models-v1"
 
 VAD = {"file": "silero_vad.onnx", "bytes": 643854,
@@ -36,6 +36,7 @@ PACKS = {
     "ru-en": {"bytes": 189062202, "sha256": "3ff5b49043acf538cee5a2065d04a0fba06d5046e7527340ccd213d89b7e3590"},
     "uk-en": {"bytes": 184677754, "sha256": "541e143ac3cdf05e0d487c0fb38b9811d5ed02d44fba86c72e41dc954411677b"},
     "es-en": {"bytes": 186321131, "sha256": "39ac015e326f8d75145ccba0d98ceb2cf46edb836a338e4b276ffafb8bd4ac81"},
+    "pl-en": {"bytes": 186149619, "sha256": "916abaf286c69e5d7b1d1c1565adfac337f321becf0784a3592ff9536f8e74f1"},
 }
 PARAKEET_FILES = ["encoder.int8.onnx", "decoder.int8.onnx", "joiner.int8.onnx", "tokens.txt"]
 WHISPER_FILES = ["small-encoder.int8.onnx", "small-decoder.int8.onnx", "small-tokens.txt"]
@@ -115,15 +116,27 @@ def extract_tar(archive, inner_dir, wanted, target):
 
 def write_config(with_whisper):
     config_path = HERE / "config.json"
+    example = json.loads((HERE / "config.example.json").read_text(encoding="utf-8"))
     if config_path.exists():
-        if not with_whisper:
+        config = json.loads(config_path.read_text(encoding="utf-8-sig"))
+        changed = False
+        # A language added in a newer version (such as Polish) is switched on for people who
+        # already have a config.json; nothing else in their file is touched.
+        for lang, entry in example["packs"].items():
+            if lang not in config["packs"]:
+                config["packs"][lang] = entry
+                changed = True
+                print(f"  config.json: added the {lang} translation pack.")
+        if with_whisper:
+            config["fallback_whisper_dir"] = "models/whisper-small"
+            changed = True
+        if not changed:
             print("  config.json already exists: left as it is.")
             return
-        config = json.loads(config_path.read_text(encoding="utf-8"))
     else:
-        config = json.loads((HERE / "config.example.json").read_text(encoding="utf-8"))
-    if with_whisper:
-        config["fallback_whisper_dir"] = "models/whisper-small"
+        config = example
+        if with_whisper:
+            config["fallback_whisper_dir"] = "models/whisper-small"
     config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     print("  config.json written.")
 
@@ -135,7 +148,7 @@ def main():
     args = parser.parse_args()
 
     MODELS.mkdir(exist_ok=True)
-    need_gb = 3.5 if args.with_whisper else 2.5
+    need_gb = 3.7 if args.with_whisper else 2.7
     free_gb = shutil.disk_usage(MODELS).free / 1e9
     if free_gb < need_gb:
         sys.exit(f"Not enough free disk space: {free_gb:.1f} GB free, about {need_gb} GB needed.")

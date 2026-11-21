@@ -4,7 +4,7 @@ Live English captions for any video playing in Google Chrome, even when the site
 subtitles. It listens to the sound of the tab, works out what is being said, and shows an
 English translation in a box over the page, a second or two behind the speaker.
 
-- **Languages:** Russian, Ukrainian and Spanish into English. It works out the language by
+- **Languages:** Russian, Ukrainian, Spanish and Polish into English. It works out the language by
   itself, so there is nothing to switch.
 - **Private:** everything runs on your own computer. After setup, no audio, text or
   anything else is sent over the internet.
@@ -34,7 +34,7 @@ bigger models would need changes to the code. The two settings `asr_threads` and
 - Google Chrome.
 - About 3 GB of free disk space and 8 GB of RAM (16 GB is better). While it runs, the
   translator itself uses about 1.5 GB of memory.
-- A normal internet connection for the one-time setup (about 1.1 GB of downloads).
+- A normal internet connection for the one-time setup (about 1.3 GB of downloads).
 - Python 3.12, free from [python.org](https://www.python.org/downloads/). On the first screen
   of the Python installer, **tick "Add python.exe to PATH"**.
 
@@ -123,8 +123,10 @@ To use an optional second speech model that sometimes rescues unclear lines, run
 
 - Chrome on Windows only. It is not on the Chrome Web Store, so it is added by hand as above.
 - Translations come from small models that run on a normal PC. Russian and Ukrainian are
-  better than Spanish. Names, slang and idioms are often wrong, and very short fragments can
-  be mistranslated. **Do not rely on it for anything where a mistake matters** (legal,
+  better than Spanish. Polish was added later and has had less testing. Names, slang and
+  idioms are often wrong, and very short fragments can be mistranslated.
+- Clear speech works best. Echoey or noisy sound, such as a live webcam with a cheap or
+  distant microphone, gives many wrong or missing lines. **Do not rely on it for anything where a mistake matters** (legal,
   medical, safety).
 - One tab at a time. The caption box is designed to follow a video into fullscreen, but
   sites with unusual players may not show it.
