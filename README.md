@@ -114,6 +114,7 @@ Tips:
 | `markers.no_speech_seconds` | seconds of sound without speech before the music note shows (0 turns it off) |
 | `vad.force_cut` | longest stretch of speech (seconds) before a caption is cut, shorter means sooner captions but choppier ones |
 | `asr_threads`, `mt_threads` | how many processor cores are used |
+| `denoise` | `false` turns off the noise remover (on by default; it helps echoey or noisy sound such as webcams and does not change clean recordings) |
 | `idle_exit_minutes` | minutes without use before the translator shuts itself down (default 10) |
 
 To use an optional second speech model that sometimes rescues unclear lines, run

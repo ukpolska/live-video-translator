@@ -67,8 +67,24 @@
     const host = document.fullscreenElement || document.documentElement;
     if (overlay.parentElement !== host) {
       host.appendChild(overlay);
+      promote();
     }
     return overlay;
+  }
+
+  // Some sites (Telegram's media viewer, fullscreen players, modal dialogs) draw their video in
+  // the browser's "top layer", which no z-index can beat: the caption box ended up behind the
+  // video's dark backdrop, dim and hard to read. Showing our box as a popover puts it in the top
+  // layer too, and re-showing it puts it above whatever was added after it.
+  function promote() {
+    if (!overlay || !overlay.isConnected || typeof overlay.showPopover !== "function") return;
+    try {
+      if (!overlay.hasAttribute("popover")) overlay.setAttribute("popover", "manual");
+      if (overlay.matches(":popover-open")) overlay.hidePopover();
+      overlay.showPopover();
+    } catch (e) {
+      // Not supported here: the normal z-index still applies.
+    }
   }
 
   // Only move a box that is actually showing captions; creating one here left an empty grey
@@ -216,6 +232,7 @@
         expires: Math.max(now + hold, last ? last.expires + 1500 : 0),
       });
       render();
+      promote(); // a new caption: make sure we are above anything that appeared since the last one
     } else if (message.type === "clear") {
       lines = [];
       render();

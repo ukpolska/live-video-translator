@@ -154,7 +154,10 @@ async def handle(websocket):
     try:
         async for message in websocket:
             if isinstance(message, str):
-                rate = int(json.loads(message)["sampleRate"])
+                hello = json.loads(message)
+                rate = int(hello["sampleRate"])
+                if hello.get("trackSettings"):
+                    print("Chrome says the captured sound has these settings:", hello["trackSettings"])
                 stream = pipe.new_stream(rate)
                 clock["t0"], clock["received"] = time.time(), 0.0
                 window.update(start=time.time(), audio=0.0, messages=0)

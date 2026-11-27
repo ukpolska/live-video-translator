@@ -29,6 +29,9 @@ PACKS_BASE_URL = "https://github.com/ukpolska/live-video-translator/releases/dow
 
 VAD = {"file": "silero_vad.onnx", "bytes": 643854,
        "sha256": "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"}
+DENOISER_RELEASE = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models"
+DENOISER = {"file": "gtcrn_simple.onnx", "bytes": 535638,
+            "sha256": "e77603ac0c23dac3227dd2d7135b3a585cbee2679048aecfa886657d3ae1b534"}
 PARAKEET = {"file": "sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2", "bytes": 487200000,
             "sha256": "1495e91b59d7fc53ddca91f3431758ec99f8fa253fdb0e1e851be0f72b14b0f9"}
 WHISPER = {"file": "sherpa-onnx-whisper-small.tar.bz2", "bytes": 639400000, "sha256": None}
@@ -155,6 +158,8 @@ def main():
 
     print("1/4  Voice detector")
     fetch(SHERPA_RELEASE, VAD["file"], VAD, MODELS, "silero_vad.onnx")
+    print("     Noise remover (small, for echoey or noisy sound)")
+    fetch(DENOISER_RELEASE, DENOISER["file"], DENOISER, MODELS, "gtcrn_simple.onnx")
 
     print("2/4  Speech recogniser (Parakeet)")
     parakeet_dir = MODELS / "parakeet-tdt-0.6b-v3-int8"

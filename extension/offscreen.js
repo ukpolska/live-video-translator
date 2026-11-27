@@ -80,7 +80,9 @@ function connectSocket() {
 
   socket.onopen = () => {
     // The server resamples, so it needs to know the rate the browser is sending at.
-    socket.send(JSON.stringify({ type: "hello", sampleRate: nativeSampleRate }));
+    let trackSettings = null; // what Chrome says about the captured sound (for the server log)
+    try { trackSettings = mediaStream.getAudioTracks()[0].getSettings(); } catch (e) {}
+    socket.send(JSON.stringify({ type: "hello", sampleRate: nativeSampleRate, trackSettings }));
     notifyStatus("connected");
   };
 

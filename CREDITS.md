@@ -16,6 +16,7 @@ These are **not** stored in this repository. `setup.bat` downloads them to your 
 | [quickmt-es-en](https://huggingface.co/quickmt/quickmt-es-en) | Spanish to English translation | the quickmt project | CC BY 4.0 |
 | [quickmt-pl-en](https://huggingface.co/quickmt/quickmt-pl-en) | Polish to English translation | the quickmt project | CC BY 4.0 |
 | [Silero VAD](https://github.com/snakers4/silero-vad) | finding where speech starts and stops | Silero Team | MIT |
+| [GTCRN](https://github.com/Xiaobin-Rong/gtcrn) (`gtcrn_simple.onnx`, via [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx/releases/tag/speech-enhancement-models)) | removing noise and echo from the sound before it is analysed | Xiaobin Rong and co-authors | MIT |
 | [Whisper small](https://huggingface.co/openai/whisper-small) (optional) | a second opinion on unclear lines | OpenAI | Apache 2.0 |
 
 **Changes made to the models (as CC BY 4.0 asks us to say):**

@@ -198,6 +198,7 @@ class Stream:
         if sample_rate != TARGET_RATE:
             self.resampler = soxr.ResampleStream(sample_rate, TARGET_RATE, 1, dtype="float32")
         self.vad = pipeline.make_vad()
+        self.denoiser = pipeline.make_denoiser()  # None when noise removal is off
         self.vad_offset = 0  # samples fed before the current detector was created
         self.fed = 0  # samples fed to the detectors so far
         self.carry = np.zeros(0, dtype=np.float32)
@@ -232,6 +233,8 @@ class Stream:
     def feed(self, samples):
         if self.resampler is not None:
             samples = self.resampler.resample_chunk(samples)
+        if self.denoiser is not None and len(samples):
+            samples = np.array(self.denoiser.run(samples, TARGET_RATE).samples, dtype=np.float32)
         if len(samples) == 0:
             return []
         self.received += len(samples)
@@ -359,6 +362,11 @@ class Pipeline:
         self.vad_config.sample_rate = TARGET_RATE
         # Automatic mode: text in a different alphabet from what the stream has been using
         # is treated as a mishearing when it is short or the speech model is unsure of it.
+        # Optional noise removal in front of the speech detector (helps echoey, noisy webcams).
+        # On by default when the small model file is present; "denoise": false turns it off.
+        den = _abs(config.get("denoise_model", "models/gtcrn_simple.onnx"))
+        self.denoise_model = den if config.get("denoise", True) and os.path.exists(den) else None
+        print("Noise removal:", "on" if self.denoise_model else "off")
         self.junk_words = config.get("junk_max_words", 3)
         self.junk_confidence = config.get("junk_confidence", -0.30)
         markers = config.get("markers", {})
@@ -378,6 +386,15 @@ class Pipeline:
             task="transcribe",
             num_threads=self.config["asr_threads"],
         )
+
+    def make_denoiser(self):
+        """A fresh noise remover for one stream, or None when 'denoise' is off in config.json."""
+        if not self.denoise_model:
+            return None
+        cfg = sherpa_onnx.OnlineSpeechDenoiserConfig()
+        cfg.model.gtcrn.model = self.denoise_model
+        cfg.model.num_threads = 1
+        return sherpa_onnx.OnlineSpeechDenoiser(cfg)
 
     def make_vad(self):
         return sherpa_onnx.VoiceActivityDetector(self.vad_config, buffer_size_in_seconds=30)
